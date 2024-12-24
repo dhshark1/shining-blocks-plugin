@@ -1,0 +1,42 @@
+name: shining-blocks
+version: '1.0-SNAPSHOT'
+main: org.losttribe.shiningBlocks.ShiningBlocks
+api-version: '1.21'
+
+commands:
+  setcorner1:
+    description: Sets the top-left corner of the wall region.
+    usage: /setcorner1
+  setcorner2:
+    description: Sets the bottom-right corner of the wall region.
+    usage: /setcorner2
+
+  setone:
+    description: Adds the block you're looking at to pattern wave 1.
+    usage: /setone
+  settwo:
+    description: Adds the block you're looking at to pattern wave 2.
+    usage: /settwo
+  setthree:
+    description: Adds the block you're looking at to pattern wave 3.
+    usage: /setthree
+  setfour:
+    description: Adds the block you're looking at to pattern wave 4.
+    usage: /setfour
+
+  shiningblocks:
+    description: Starts the ShiningBlocks game after patterns are set.
+    usage: /shiningblocks
+
+  lightone:
+    description: Lights and begins wave 1.
+    usage: /lightone
+  lighttwo:
+    description: Lights and begins wave 2.
+    usage: /lighttwo
+  lightthree:
+    description: Lights and begins wave 3.
+    usage: /lightthree
+  lightfour:
+    description: Lights and begins wave 4.
+    usage: /lightfour
