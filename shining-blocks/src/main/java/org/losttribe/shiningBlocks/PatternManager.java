@@ -9,10 +9,6 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Stores up to 4 patterns, each is a list of block Locations in the wall.
- * Now includes methods to load/save from config.
- */
 public class PatternManager {
 
     private List<Location>[] wavePatterns;
@@ -27,9 +23,16 @@ public class PatternManager {
         }
     }
 
-    public void addBlockToWave(int wave, Location loc) {
-        if (wave < 1 || wave > 4) return;
-        wavePatterns[wave - 1].add(loc);
+    public boolean addBlockToWave(int wave, Location loc) {
+        if (wave < 1 || wave > 4) return false;
+        List<Location> pattern = wavePatterns[wave - 1];
+
+        if (pattern.contains(loc)) {
+            return false;
+        }
+
+        pattern.add(loc);
+        return true;
     }
 
     public List<Location> getWavePattern(int wave) {
@@ -46,23 +49,15 @@ public class PatternManager {
         return true;
     }
 
-    /**
-     * Load patterns from config.yml
-     *
-     * We'll store them under "patterns.wave1", "patterns.wave2", etc.,
-     * Each wave is a list of strings in format: "world:x:y:z"
-     */
     public void loadPatternsFromConfig(FileConfiguration config) {
         for (int wave = 1; wave <= 4; wave++) {
             String path = "patterns.wave" + wave;
             if (!config.isList(path)) {
-                // no pattern list found
                 continue;
             }
 
             List<String> locStrings = config.getStringList(path);
             for (String locString : locStrings) {
-                // parse "world:x:y:z"
                 String[] parts = locString.split(":");
                 if (parts.length < 4) {
                     plugin.getLogger().warning("Invalid pattern location string: " + locString);
@@ -84,11 +79,7 @@ public class PatternManager {
         }
     }
 
-    /**
-     * Save patterns to config.yml
-     */
     public void savePatternsToConfig(FileConfiguration config) {
-        // We'll build a list of strings for each wave in format "world:x:y:z"
         for (int wave = 1; wave <= 4; wave++) {
             List<String> locStrings = new ArrayList<>();
             for (Location loc : wavePatterns[wave - 1]) {

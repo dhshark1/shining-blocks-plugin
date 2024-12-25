@@ -1,6 +1,5 @@
 package org.losttribe.shiningBlocks;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -8,11 +7,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-/**
- * Manages a single player's 4-wave game session and input checks.
- */
 public class PlayerGameSession {
 
     private JavaPlugin plugin;
@@ -20,9 +18,10 @@ public class PlayerGameSession {
     private RegionManager regionManager;
     private PatternManager patternManager;
 
-    private int currentWave;         // which wave the player is on
-    private boolean waitingForClicks; // is the player expected to click
-    private int clickIndex;          // next index in the pattern
+    private int currentWave;
+    private boolean waitingForClicks;
+    private int clickIndex;
+    private Set<Location> clickedThisWave = new HashSet<>();
 
     public PlayerGameSession(JavaPlugin plugin, Player player,
                              RegionManager regionManager,
@@ -37,10 +36,8 @@ public class PlayerGameSession {
     }
 
     public void beginWave(int wave) {
-        // Ensure correct wave progression
         if (wave != currentWave + 1) {
-            player.sendMessage("You cannot start wave " + wave + " yet. "
-                    + "Complete wave " + (currentWave + 1) + " first.");
+            player.sendMessage("You cannot start wave " + wave + " yet. Complete wave " + (currentWave + 1) + " first.");
             return;
         }
 
@@ -54,19 +51,47 @@ public class PlayerGameSession {
             return;
         }
 
-        // Highlight the entire pattern so the player sees which blocks to click
-        highlightPattern(pattern);
+        highlightPattern(pattern, wave);
 
         player.sendMessage("Wave " + wave + " has begun! Click the blocks in the correct order.");
     }
 
+    private void highlightPattern(List<Location> pattern, int waveNumber) {
+        for (Location loc : pattern) {
+            Block b = loc.getBlock();
+            if (b != null) {
+                b.setType(Material.REDSTONE_BLOCK);
+            }
+        }
+
+        long revertTicks;
+        switch (waveNumber) {
+            case 1: revertTicks = 100L; break;
+            case 2: revertTicks = 80L;  break;
+            case 3: revertTicks = 40L;  break;
+            case 4: revertTicks = 20L;  break;
+            default: revertTicks = 100L; break;
+        }
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Location loc : pattern) {
+                    Block b = loc.getBlock();
+                    if (b != null) {
+                        b.setType(Material.REDSTONE_LAMP);
+                    }
+                }
+            }
+        }.runTaskLater(plugin, revertTicks);
+    }
+
     public void handleBlockClick(BlockPosition blockPos) {
-        if (!waitingForClicks) return; // no wave in progress
+        if (!waitingForClicks) return;
 
         Block clickedBlock = blockPos.toBlock();
         if (clickedBlock == null) return;
 
-        // Must be inside the defined region (the "wall")
         if (!regionManager.isWithinRegion(clickedBlock.getLocation())) {
             return;
         }
@@ -75,34 +100,33 @@ public class PlayerGameSession {
         Location expectedLoc = pattern.get(clickIndex);
 
         if (isSameBlock(expectedLoc, clickedBlock.getLocation())) {
-            // Correct
+            if (clickedThisWave.contains(clickedBlock.getLocation())) {
+                player.sendMessage("You already clicked this block; ignoring.");
+                return;
+            }
             clickIndex++;
             player.sendMessage("Correct block " + clickIndex + "/" + pattern.size() + "!");
 
-            // If wave is completed
             if (clickIndex >= pattern.size()) {
                 waitingForClicks = false;
                 if (currentWave == 4) {
                     player.sendMessage("Congratulations! You've completed wave 4 and the entire challenge!");
                 } else {
-                    player.sendMessage("Wave " + currentWave + " complete! "
-                            + "Use /light" + (currentWave + 1) + " to start the next wave.");
+                    player.sendMessage("Wave " + currentWave + " complete! ");
                 }
             }
         } else {
-            // Wrong block
             turnBlockRed(clickedBlock);
             player.sendMessage("That was the wrong block! Memorize the pattern again!");
 
             waitingForClicks = false;
             clickIndex = 0;
 
-            // After 2s, revert to lamp, then re-light the pattern
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     revertToLamp(clickedBlock);
-                    highlightPattern(pattern);
+                    highlightPattern(pattern, currentWave);
                     waitingForClicks = true;
                 }
             }.runTaskLater(plugin, 40L); // 2 seconds
@@ -114,16 +138,6 @@ public class PlayerGameSession {
                 && loc1.getBlockY() == loc2.getBlockY()
                 && loc1.getBlockZ() == loc2.getBlockZ()
                 && loc1.getWorld().equals(loc2.getWorld());
-    }
-
-    private void highlightPattern(List<Location> pattern) {
-        // Turn them 'on' (for demonstration, use REDSTONE_BLOCK)
-        for (Location loc : pattern) {
-            Block b = loc.getBlock();
-            if (b != null) {
-                b.setType(Material.REDSTONE_BLOCK);
-            }
-        }
     }
 
     private void turnBlockRed(Block block) {

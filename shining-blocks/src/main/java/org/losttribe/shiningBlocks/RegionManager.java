@@ -5,10 +5,6 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Stores the top-left and bottom-right corners of the wall region.
- * Now includes load/save from config.yml.
- */
 public class RegionManager {
 
     private Location corner1;
@@ -48,12 +44,8 @@ public class RegionManager {
                 && loc.getZ() >= minZ && loc.getZ() <= maxZ);
     }
 
-    /**
-     * Load corners from config.yml
-     */
     public void loadRegionFromConfig(FileConfiguration config) {
         if (!config.contains("region")) {
-            // No region data
             return;
         }
         String worldName = config.getString("region.world");
@@ -66,17 +58,12 @@ public class RegionManager {
 
         World world = plugin.getServer().getWorld(worldName);
         if (world == null) {
-            plugin.getLogger().warning("RegionManager: World '" + worldName + "' not found. Region not loaded.");
             return;
         }
         corner1 = new Location(world, x1, y1, z1);
         corner2 = new Location(world, x2, y2, z2);
-        plugin.getLogger().info("Region loaded from config: " + corner1 + " to " + corner2);
     }
 
-    /**
-     * Save corners to config.yml
-     */
     public void saveRegionToConfig(FileConfiguration config) {
         if (!isRegionDefined()) return;
 

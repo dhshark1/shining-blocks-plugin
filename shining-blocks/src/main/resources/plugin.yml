@@ -4,12 +4,9 @@ main: org.losttribe.shiningBlocks.ShiningBlocks
 api-version: '1.21'
 
 commands:
-  setcorner1:
-    description: Sets the top-left corner of the wall region.
-    usage: /setcorner1
-  setcorner2:
-    description: Sets the bottom-right corner of the wall region.
-    usage: /setcorner2
+  setwall:
+    description: Sets the top-left or bottom-right corners of the wall region.
+    usage: /setwall <top|bottom>
 
   setone:
     description: Adds the block you're looking at to pattern wave 1.

@@ -1,13 +1,10 @@
 package org.losttribe.shiningBlocks;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-/**
- * Convenience class for storing block positions (world, x, y, z).
- */
+
 public class BlockPosition {
     private String worldName;
     private int x;
