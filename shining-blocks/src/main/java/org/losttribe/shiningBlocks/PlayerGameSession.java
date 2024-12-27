@@ -3,6 +3,8 @@ package org.losttribe.shiningBlocks;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -60,16 +62,23 @@ public class PlayerGameSession {
         for (Location loc : pattern) {
             Block b = loc.getBlock();
             if (b != null) {
-                b.setType(Material.REDSTONE_BLOCK);
+                b.setType(Material.REDSTONE_LAMP);
+
+                BlockData data = b.getBlockData();
+                if (data instanceof Lightable) {
+                    Lightable lightable = (Lightable) data;
+                    lightable.setLit(true);
+                    b.setBlockData(lightable);
+                }
             }
         }
 
         long revertTicks;
         switch (waveNumber) {
-            case 1: revertTicks = 100L; break;
-            case 2: revertTicks = 80L;  break;
-            case 3: revertTicks = 40L;  break;
-            case 4: revertTicks = 20L;  break;
+            case 1: revertTicks = 100L; break; // 5 seconds
+            case 2: revertTicks = 80L;  break; // 4 seconds
+            case 3: revertTicks = 40L;  break; // 2 seconds
+            case 4: revertTicks = 20L;  break; // 1 second
             default: revertTicks = 100L; break;
         }
 
@@ -80,11 +89,19 @@ public class PlayerGameSession {
                     Block b = loc.getBlock();
                     if (b != null) {
                         b.setType(Material.REDSTONE_LAMP);
+
+                        BlockData data = b.getBlockData();
+                        if (data instanceof Lightable) {
+                            Lightable lightable = (Lightable) data;
+                            lightable.setLit(false);
+                            b.setBlockData(lightable);
+                        }
                     }
                 }
             }
         }.runTaskLater(plugin, revertTicks);
     }
+
 
     public void handleBlockClick(BlockPosition blockPos) {
         if (!waitingForClicks) return;
